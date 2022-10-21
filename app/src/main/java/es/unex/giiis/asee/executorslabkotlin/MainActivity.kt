@@ -24,27 +24,34 @@ class MainActivity : AppCompatActivity(), MyAdapter.OnListInteractionListener {
         recyclerView!!.setHasFixedSize(true)
         layoutManager = LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
-        // Parse json file into JsonReader
-        val reader = JsonReader(
-            InputStreamReader(
-                resources.openRawResource(R.raw.rrecheve_github_repos)
-            )
-        )
-        // Parse JsonReader into list of Repo using Gson
-        val repos: List<Repo> = Gson().fromJson(
-            reader,
-            object : TypeToken<List<Repo>>() {}.type
-        )
+        mAdapter = MyAdapter(emptyList(), this)
 
-        for (repo in repos) {
-            try {
-                Thread.sleep(1000)
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
+        AppExecutors.instance?.diskIO()?.execute {
+            // Parse json file into JsonReader
+            val reader = JsonReader(
+                InputStreamReader(
+                    resources.openRawResource(R.raw.rrecheve_github_repos)
+                )
+            )
+            // Parse JsonReader into list of Repo using Gson
+            val repos: List<Repo> = Gson().fromJson(
+                reader,
+                object : TypeToken<List<Repo>>() {}.type
+            )
+
+            for (repo in repos) {
+                try {
+                    Thread.sleep(1000)
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
+            }
+
+            runOnUiThread {
+                mAdapter!!.swap(repos)
             }
         }
 
-        mAdapter = MyAdapter(repos, this)
         recyclerView!!.adapter = mAdapter
     }
 
