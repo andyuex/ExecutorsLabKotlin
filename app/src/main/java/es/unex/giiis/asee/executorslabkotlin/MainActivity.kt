@@ -8,8 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import es.unex.giiis.asee.executorslabkotlin.model.Repo
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 
 class MainActivity : AppCompatActivity(), MyAdapter.OnListInteractionListener {
@@ -25,25 +23,15 @@ class MainActivity : AppCompatActivity(), MyAdapter.OnListInteractionListener {
         recyclerView!!.layoutManager = layoutManager
         mAdapter = MyAdapter(emptyList(), this)
 
-        // Create a very simple REST adapter which points to the API.
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.github.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val service = retrofit.create(GitHubService::class.java)
-        service.listRepos("rrecheve").enqueue(object : retrofit2.Callback<List<Repo>> {
-            override fun onResponse(call: retrofit2.Call<List<Repo>>, response: retrofit2.Response<List<Repo>>) {
-                val repos = response.body()
-                runOnUiThread {
-                    mAdapter!!.swap(repos!!)
+        AppExecutors.instance?.networkIO()?.execute {
+            ReposNetworkLoaderRunnable(object : OnReposLoadedListener {
+                override fun onReposLoaded(repos: List<Repo>) {
+                    runOnUiThread {
+                        mAdapter!!.swap(repos)
+                    }
                 }
-            }
-
-            override fun onFailure(call: retrofit2.Call<List<Repo>>, t: Throwable) {
-                t.printStackTrace()
-            }
-        })
+            }).run()
+        }
 
         recyclerView!!.adapter = mAdapter
     }
