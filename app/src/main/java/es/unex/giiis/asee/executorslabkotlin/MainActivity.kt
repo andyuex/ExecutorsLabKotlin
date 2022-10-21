@@ -36,6 +36,14 @@ class MainActivity : AppCompatActivity(), MyAdapter.OnListInteractionListener {
             object : TypeToken<List<Repo>>() {}.type
         )
 
+        for (repo in repos) {
+            try {
+                Thread.sleep(1000)
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+        }
+
         mAdapter = MyAdapter(repos, this)
         recyclerView!!.adapter = mAdapter
     }
